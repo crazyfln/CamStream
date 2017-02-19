@@ -60,7 +60,7 @@ class CamHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         global cams
         urlp = urlparse.urlparse(self.path)
-        #keep_blank_values=True to dont remove ?cam=1&gray
+        #keep_blank_values=True to keep key with out value (like that ?&gray = {'gray':''})
         query_components = urlparse.parse_qs(urlp.query) 
         path = urlp.path
 
