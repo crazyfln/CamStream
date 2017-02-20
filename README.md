@@ -6,9 +6,15 @@ Stream your webcams over http using mjpeg format
 ###### [*] Multiple webcams
 ###### [*] Image compression (quality, crop, grayscale)
 
+
+## Endpoints
+###### [*] /?cam=(int)
+###### [*] /list -> Show list of your connected webcams
+
+
+
 ## Url query
 ###### [*] example url: http://localhost:8080/?cam=0&q=50&gray=true&crop=2
-
 ###### [*] cam=(int) 
 ###### [*] q=(int)
 ###### [*] gray=(bool)
