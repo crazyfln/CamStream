@@ -7,6 +7,11 @@ Stream your webcams over http using mjpeg format
 ###### [*] Image compression (quality, crop, grayscale)
 ###### [*] example url: http://localhost:8080/?cam=0&q=50&gray=true&crop=2
 
-###### url query
+## url query
+cam=(int) 
+q=(int)
+gray=(bool)
+crop=(int) -> image size / crop
+face=(bool)
 
 ![alt tag](https://raw.githubusercontent.com/avramit/CamStream/master/screenshot.png)
