@@ -1,6 +1,6 @@
 # CamStream
-Stream your webcams over http(Mjpeg)
-<>
+Stream your webcams over http use mjpeg format
+
 ###### [*] Face detection
 ###### [*] Image compression
 ###### [*] Image crop
