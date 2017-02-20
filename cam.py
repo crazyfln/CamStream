@@ -7,6 +7,12 @@ from SocketServer import ThreadingMixIn
 import time
 import urlparse
 import Image
+import base64
+
+username = 'admin'
+password = 'admin'
+AuthKey = base64.b64encode(username+':'+password)
+
 
 HEADER = '\033[95m'
 OKBLUE = '\033[94m'
@@ -54,13 +60,37 @@ def FaceDetect(img):
         '''
 	return Image.fromarray(img)
 
+def sendAuth(self):
+	self.send_response(401)
+	self.send_header('WWW-Authenticate', 'Basic realm=\"Test\"')
+	self.send_header('Content-type', 'text/html')
+	self.end_headers()
+
+def checkAuth(self):
+	global AuthKey
+	if self.headers.getheader('Authorization') == None:
+		sendAuth(self)
+		self.wfile.write('no auth header received')
+		return False
+	elif self.headers.getheader('Authorization') == 'Basic ' + AuthKey:
+		return True
+	else:
+		sendAuth(self)
+		self.wfile.write(self.headers.getheader('Authorization'))
+		self.wfile.write('not authenticated')
+		return False
 
 
 class CamHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         global cams
+        
+        if not checkAuth(self):
+			return
+
+   		
         urlp = urlparse.urlparse(self.path)
-        #keep_blank_values=True to keep key with out value (like that ?&gray = {'gray':''})
+        #keep_blank_values=True to dont remove ?cam=1&gray
         query_components = urlparse.parse_qs(urlp.query) 
         path = urlp.path
 
