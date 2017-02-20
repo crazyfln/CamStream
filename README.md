@@ -5,7 +5,7 @@ Stream your webcams over http using mjpeg format
 ###### [*] Face detection
 ###### [*] Multiple webcams
 ###### [*] Image compression (quality, crop, grayscale)
-
+###### [*] Config File
 
 ## Endpoints
 ###### [*] /?cam=(int)
@@ -21,4 +21,7 @@ Stream your webcams over http using mjpeg format
 ###### [*] crop=(int) -> image size / crop
 ###### [*] face=(bool)
 
+## Config File
+###### [*] Want to disable basic auth -> In config.json change auth:allow to False
+###### [*] Want to change basic auth username and password -> In config.json change auth:username & auth:password
 ![alt tag](https://raw.githubusercontent.com/avramit/CamStream/master/screenshot.png)
