@@ -76,7 +76,7 @@ def FaceDetect(img):
 
 def sendAuth(self):
 	self.send_response(401)
-	self.send_header('WWW-Authenticate', 'Basic realm=\"Test\"')
+	self.send_header('WWW-Authenticate', 'Basic realm=\"ServerCam\"')
 	self.send_header('Content-type', 'text/html')
 	self.end_headers()
 
@@ -152,22 +152,32 @@ class CamHandler(BaseHTTPRequestHandler):
                 	#make image gray
                 	aimg = aimg.convert('L') 
 
+                #crop need to be after all if we want to use face detection
                 if ('crop' in query_components):
                 	w,h = img.get_size()
                 	CropPr = int(query_components['crop'][0])
                 	aimg = aimg.resize((w / CropPr, h / CropPr), Image.ANTIALIAS)
 
+                '''
+				Old function to chnage quality (look like it eat my cpu)
                 if ('q' in query_components):
 	                oa = StringIO.StringIO()
 	                aimg.save(oa,'JPEG',quality=int(query_components['q'][0]))
 	                oa.seek(0)
 	                aimg = Image.open(oa)
-
+	            '''
 
                 self.send_header('Content-type','image/jpeg')
-                self.send_header('Content-length',str(len(aimg.tobytes()))) #len(data) = len(aimg.tobytes()) #original image
-                self.end_headers()
-                aimg.save(self.wfile, 'JPEG') #original image
+               	if ('q' in query_components):
+                	o = StringIO.StringIO()
+                	aimg.save(o,'JPEG',quality=int(query_components['q'][0]))
+                	self.send_header('Content-length',str(o.len))
+                	self.end_headers()
+                	self.wfile.write(o.getvalue()) #after comp
+                else:
+                	self.send_header('Content-length',str(len(aimg.tobytes()))) #len(data) = len(aimg.tobytes()) #original image
+                	self.end_headers()
+                	aimg.save(self.wfile, 'JPEG') #original image
                 self.wfile.write('\n')
 
      
