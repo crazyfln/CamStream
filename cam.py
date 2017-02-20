@@ -8,10 +8,22 @@ import time
 import urlparse
 import Image
 import base64
+import numpy as np
+import cv2
+import json
+import socket
+import StringIO
 
-username = 'admin'
-password = 'admin'
-AuthKey = base64.b64encode(username+':'+password)
+face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
+eye_cascade = cv2.CascadeClassifier('haarcascade_eye.xml')
+
+IsRunnig = True
+
+UseAuth = True 
+
+AuthKey = None
+
+serverport = 8080
 
 
 HEADER = '\033[95m'
@@ -24,11 +36,9 @@ ENDC = '\033[0m'
 def printc(string,color):
     print color + string + ENDC
 
+#Get list of webcams and start each one
 pygame.camera.init()
 cameras = pygame.camera.list_cameras()
-
-IsRunnig = True
-
 cams = []
 for c in range(len(cameras)):
     ca = pygame.camera.Camera(cameras[c])
@@ -37,28 +47,32 @@ for c in range(len(cameras)):
     cams.append(ca)
 
 
-import numpy as np
-import cv2
-face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
-eye_cascade = cv2.CascadeClassifier('haarcascade_eye.xml')
+
+
 
 class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
     pass
 
 def FaceDetect(img):
-	img = np.asarray(img)
-	gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+	imgArr = np.asarray(img)
+	gray = cv2.cvtColor(imgArr, cv2.COLOR_BGR2GRAY)
 	faces = face_cascade.detectMultiScale(gray, 1.3, 5)
+	
+	#add face counter
+	#w, h = img.size
+	#cv2.putText(imgArr,('Faces: %s' % len(faces)),(w/h,h/15), cv2.FONT_HERSHEY_SIMPLEX, 1,(255,0,0),2)
+
+
 	for (x,y,w,h) in faces:
-	    cv2.rectangle(img,(x,y),(x+w,y+h),(255,0,0),1)
+	    cv2.rectangle(imgArr,(x,y),(x+w,y+h),(255,0,0),1)
 	    roi_gray = gray[y:y+h, x:x+w]
-	    roi_color = img[y:y+h, x:x+w]
+	    roi_color = imgArr[y:y+h, x:x+w]
         '''
 	    eyes = eye_cascade.detectMultiScale(roi_gray)
 	    for (ex,ey,ew,eh) in eyes:
 	        cv2.rectangle(roi_color,(ex,ey),(ex+ew,ey+eh),(0,0,0),1)
         '''
-	return Image.fromarray(img)
+	return Image.fromarray(imgArr)
 
 def sendAuth(self):
 	self.send_response(401)
@@ -83,10 +97,11 @@ def checkAuth(self):
 
 class CamHandler(BaseHTTPRequestHandler):
     def do_GET(self):
-        global cams
-        
-        if not checkAuth(self):
-			return
+        global cams, UseAuth
+       
+       	if (UseAuth == True):
+        	if (checkAuth(self) == False):
+				return
 
    		
         urlp = urlparse.urlparse(self.path)
@@ -142,18 +157,17 @@ class CamHandler(BaseHTTPRequestHandler):
                 	CropPr = int(query_components['crop'][0])
                 	aimg = aimg.resize((w / CropPr, h / CropPr), Image.ANTIALIAS)
 
+                if ('q' in query_components):
+	                oa = StringIO.StringIO()
+	                aimg.save(oa,'JPEG',quality=int(query_components['q'][0]))
+	                oa.seek(0)
+	                aimg = Image.open(oa)
+
+
                 self.send_header('Content-type','image/jpeg')
-               	if ('q' in query_components):
-               		import StringIO
-                	o = StringIO.StringIO()
-                	aimg.save(o,'JPEG',quality=int(query_components['q'][0]))
-                	self.send_header('Content-length',str(o.len))
-                	self.end_headers()
-                	self.wfile.write(o.getvalue()) #after comp
-                else:
-                	self.send_header('Content-length',str(len(aimg.tobytes()))) #len(data) = len(aimg.tobytes()) #original image
-                	self.end_headers()
-                	aimg.save(self.wfile, 'JPEG') #original image
+                self.send_header('Content-length',str(len(aimg.tobytes()))) #len(data) = len(aimg.tobytes()) #original image
+                self.end_headers()
+                aimg.save(self.wfile, 'JPEG') #original image
                 self.wfile.write('\n')
 
      
@@ -162,20 +176,47 @@ class CamHandler(BaseHTTPRequestHandler):
                 pass
         return 
 
+
+
+def buildKey(username,password):
+	return base64.b64encode(username+':'+password)
+
+
+def LoadConfig():
+	global UseAuth
+	global AuthKey
+	global serverport
+	data = json.loads(open('config.json','UTF-8').read())
+	serverport = data['port']
+	if (data['auth']['allow']):
+		UseAuth = True
+		AuthKey = buildKey(data['auth']['username'],data['auth']['password'])
+		print 'Auth is allow'
+	else:
+		UseAuth = False
+
+
+def GetLocalIp():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.connect(("gmail.com",80))
+    PCip = s.getsockname()[0]
+    s.close()
+    return PCip
+
 def main():
     global img
     global server
     global IsRunnig
+    global serverport
     try:
         #ThreadedHTTPServer -> HTTPServer
 
-        import socket
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.connect(("gmail.com",80))
-        PCip = s.getsockname()[0]
-        s.close()
+       
+        LoadConfig()
+        PCip = GetLocalIp()
+    
 
-        serverport = 8080
+        
         server = ThreadedHTTPServer(('', serverport), CamHandler)
 
         print "Server start on http://"+PCip+':'+str(serverport)+'/'
