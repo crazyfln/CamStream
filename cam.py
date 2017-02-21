@@ -178,7 +178,7 @@ class CamHandler(BaseHTTPRequestHandler):
                 	self.send_header('Content-length',str(len(aimg.tobytes()))) #len(data) = len(aimg.tobytes()) #original image
                 	self.end_headers()
                 	aimg.save(self.wfile, 'JPEG') #original image
-                self.wfile.write('\r')
+                self.wfile.write('\n')
 
      
 
