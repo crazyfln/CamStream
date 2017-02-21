@@ -131,7 +131,7 @@ class CamHandler(BaseHTTPRequestHandler):
 	        return   
 
         self.send_response(200)
-        self.send_header('Cache-Control', 'no-store, no-cache, max-age=0')
+        self.send_header('Cache-Control', 'no-store, no-cache, private, max-age=0')
         self.send_header('Content-type','multipart/x-mixed-replace; boundary=--frame')
         self.send_header('Pragma', 'no-cache')
         self.end_headers()
@@ -178,7 +178,7 @@ class CamHandler(BaseHTTPRequestHandler):
                 	self.send_header('Content-length',str(len(aimg.tobytes()))) #len(data) = len(aimg.tobytes()) #original image
                 	self.end_headers()
                 	aimg.save(self.wfile, 'JPEG') #original image
-                self.wfile.write('\n')
+                self.wfile.write('\r')
 
      
 
@@ -196,14 +196,21 @@ def LoadConfig():
 	global UseAuth
 	global AuthKey
 	global serverport
-	data = json.loads(open('config.json','UTF-8').read())
-	serverport = data['port']
-	if (data['auth']['allow']):
+	try:
+		data = json.loads(open('config.json','UTF-8').read())
+		serverport = int(data['port'])
+		if (data['auth']['allow']):
+			UseAuth = True
+			AuthKey = buildKey(data['auth']['username'],data['auth']['password'])
+		else:
+			UseAuth = False
+		print 'Config load successfully'
+	except:
+		print 'Cant load config'
 		UseAuth = True
-		AuthKey = buildKey(data['auth']['username'],data['auth']['password'])
-		print 'Auth is allow'
-	else:
-		UseAuth = False
+		serverport = 8080
+		AuthKey = buildKey('admin','admin')
+		print 'Default username and password: admin,admin'
 
 
 def GetLocalIp():
