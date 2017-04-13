@@ -1,6 +1,6 @@
 # CamStream
-Stream your webcams over http using mjpeg format
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=ARVABYAUX3NPC)
+Stream your webcams over http using mjpeg format
 ###### [*] Basic authentication [admim,admin]
 ###### [*] Face detection
 ###### [*] Multiple webcams
